@@ -1,0 +1,24 @@
+{
+  "name": "weather-stats",
+  "version": "1.0.0",
+  "description": "Download weather stats from DarkSky",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rahul Kadukar",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rahulkadukar/weather-stats.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rahulkadukar/weather-stats/issues"
+  },
+  "homepage": "https://github.com/rahulkadukar/weather-stats#readme",
+  "dependencies": {
+    "got": "^11.8.0",
+    "node-cron": "^2.0.3",
+    "pg": "^8.4.2"
+  }
+}
