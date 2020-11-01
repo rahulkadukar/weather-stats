@@ -1,4 +1,5 @@
 const cron = require('node-cron')
+const fs = require('fs')
 const got = require('got')
 const darkSkyToken = process.env['TOKEN_DARKSKY']
 const { sqlQuery } = require('../utils/postgres')
@@ -12,32 +13,30 @@ Date.prototype.addDays = function(days) {
 async function sleepForMs(ms) { return new Promise(r => setTimeout(r, ms)) }
 function dnow() { return new Date().toISOString() }
 
-async function init() {
-  const cityList = {
-    'new_york': {
-      'lat': '40.7128',
-      'lon': '-74.0060',
-      'name': 'New York'
-    },
-    'tokyo': {
-      'lat': '35.6762',
-      'lon': '139.6503',
-      'name': 'Tokyo'
-    }
-  }
+function shuffleObject(obj) {
+  const newObj = {}
+  const keys = Object.keys(obj)
 
-  await processCities(cityList)
+  keys.sort((a,b) => { return (Math.random() - 0.5) })
+  keys.forEach((k) => { newObj[k] = obj[k]  })
+  return newObj
+}
+
+async function init() {
+  const cityList = JSON.parse(fs.readFileSync('./config/cityList.json', 'utf-8'))
+  const shuffledCities = shuffleObject(cityList)
+  await processCities(shuffledCities)
 }
 
 async function processCities(cityList) {
-  const dateRange = ['2020-01-01', '2020-01-31']
+  const dateRange = ['2020-01-01', '2020-10-31']
   const url = 'https://api.darksky.net/forecast'
   const maxCount = 10
 
   try {
     let c = 0
     for (const [k, v] of Object.entries(cityList)) {
-      if (++c > maxCount) break
+      if (c > maxCount) break
       const lat = v.lat
       const lon = v.lon
       const dateArray = []

@@ -1,0 +1,6 @@
+{
+  "london"  : { "lat": "51.5074", "lon": "0.1278", "name": "London" },
+  "mumbai"  : { "lat": "19.0760", "lon": "72.8777", "name": "Mumbai" },
+  "new_york": { "lat": "40.7128", "lon": "-74.0060", "name": "New York" },
+  "tokyo"   : { "lat": "35.6762", "lon": "139.6503", "name": "Tokyo" }
+}
