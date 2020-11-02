@@ -37,7 +37,7 @@ async function insertDateInfo(sqlText) {
 
 async function processCities(cityList) {
   const dateArray = []
-  const maxCount = 4
+  const maxCount = 10
   const url = 'https://api.darksky.net/forecast'
 
   const data = await sqlQuery({
