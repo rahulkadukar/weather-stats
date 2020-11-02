@@ -16,11 +16,15 @@ function dnow() { return new Date().toISOString() }
 
 /* Uncomment the line below for testing */
 // init().then(() => { process.exit() })
+runonce().then(() => { console.log(`[${dnow()}] : INIT COMPLETE`)})
+
+async function runonce() {
+  await prepareDB()
+}
 
 /*  Main function */
 async function init() {
   const cityList = JSON.parse(fs.readFileSync('./config/cityList.json', 'utf-8'))
-  await prepareDB(cityList)
   await processCities(cityList)
 }
 
@@ -77,7 +81,8 @@ async function processCities(cityList) {
   }
 }
 
-async function prepareDB(cityList) {
+async function prepareDB() {
+  const cityList = JSON.parse(fs.readFileSync('./config/cityList.json', 'utf-8'))
   const dateRange = ['2019-01-01', '2020-10-31']
   const dateArray = []
 
