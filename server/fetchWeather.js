@@ -19,7 +19,9 @@ function dnow() { return new Date().toISOString() }
 runonce().then(() => { console.log(`[${dnow()}] : INIT COMPLETE`)})
 
 async function runonce() {
-  await prepareDB()
+  const cityList = JSON.parse(fs.readFileSync('./config/cityList.json', 'utf-8'))
+  const dateRange = ['2000-01-01', '2020-10-31']
+  await prepareDB(cityList, dateRange)
 }
 
 /*  Main function */
@@ -42,7 +44,7 @@ async function processCities(cityList) {
 
   const data = await sqlQuery({
     text: `SELECT * FROM "public".darksky_dailyweather WHERE rawdata = $1 ` +
-        `ORDER BY eventtime DESC LIMIT ${Math.floor(maxCount * 2)}`,
+        `ORDER BY RANDOM() LIMIT ${Math.floor(maxCount * 2)}`,
     values: [ '{}']
   })
 
@@ -81,9 +83,7 @@ async function processCities(cityList) {
   }
 }
 
-async function prepareDB() {
-  const cityList = JSON.parse(fs.readFileSync('./config/cityList.json', 'utf-8'))
-  const dateRange = ['2019-01-01', '2020-10-31']
+async function prepareDB(cityList, dateRange) {
   const dateArray = []
 
   let firstDate = new Date(`${dateRange[0]}T06:00:00.000Z`)
@@ -111,7 +111,50 @@ async function prepareDB() {
   }
 }
 
+async function updateDate() {
+  const dateYest = new Date()
+  dateYest.setDate(dateYest.getDate() - 1)
+  const fetchMaxDate = `SELECT cityname, MAX(DATE(eventtime)) FROM "public".darksky_dailyweather` +
+    ` GROUP BY cityname`
+  const someData = await sqlQuery(fetchMaxDate)
+  if (someData.returnCode === 0 && someData.dbResult.length !== 0) {
+    const dateArray = []
+    
+    someData.dbResult.forEach((r) => {
+      let firstDate = new Date(`${r.max.slice(0,10)}T06:00:00.000Z`)
+      firstDate = firstDate.addDays(1)
+      const lastDate = new Date(`${dateYest.toISOString().slice(0,10)}T06:00:00.000Z`)
+
+      while (firstDate <= lastDate) {
+        const dateToInsert = new Date(`${firstDate.toISOString().slice(0,10)}T06:00:00.000Z`)
+        dateArray.push({ 'c': r.cityname, 'd': dateToInsert})
+        firstDate = firstDate.addDays(1)
+      }
+    })
+
+    let ctr = 0
+    let insertText = ''
+    for (let i = 0; i < dateArray.length; ++i) {
+      const dateToProcess = dateArray[i].d.getTime() / 1000
+      insertText += `('${dateArray[i].c}', '${new Date(dateToProcess * 1000).toISOString()}', '{}'),`
+      if (++ctr % 1000 === 0) {
+        await insertDateInfo(insertText)
+        insertText = ''
+        ctr = 0
+      }
+    }
+
+    if (insertText !== '') { await insertDateInfo(insertText) }
+  }
+
+}
+
 cron.schedule('0 */15 * * * *', () => {
   console.log(`[${dnow()}]: Starting DarkSky Fetch`)
   init().then(() => { console.log(`[${dnow()}]: DONE`); return {} })
+})
+
+cron.schedule('0 20 0 * * *', () => {
+  console.log(`[${dnow()}]: [UPDATE] Date for existing cities`)
+  updateDate().then(() => { console.log(`[${dnow()}]: [UPDATE DONE]`); return {} })
 })

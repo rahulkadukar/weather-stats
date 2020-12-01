@@ -1,6 +1,13 @@
 {
+  "chicago"  : { "lat": "41.8781", "lon": "-87.6298", "name": "Chicago" },
   "london"  : { "lat": "51.5074", "lon": "0.1278", "name": "London" },
+  "los_angeles"  : { "lat": "34.0522", "lon": "-118.2347", "name": "Los Angeles" },
+  "moscow"  : { "lat": "55.7558", "lon": "37.6173", "name": "Moscow" },
   "mumbai"  : { "lat": "19.0760", "lon": "72.8777", "name": "Mumbai" },
   "new_york": { "lat": "40.7128", "lon": "-74.0060", "name": "New York" },
+  "paris": { "lat": "48.8566", "lon": "2.3522", "name": "Paris" },
+  "sao_paulo": { "lat": "-23.5505", "lon": "-46.6333", "name": "Sao Paulo"},
+  "seoul": { "lat": "37.5665", "lon": "126.9780", "name": "Seoul"},
+  "shanghai": { "lat": "31.2304", "lon": "121.4737", "name": "Shanghai"},
   "tokyo"   : { "lat": "35.6762", "lon": "139.6503", "name": "Tokyo" }
 }
