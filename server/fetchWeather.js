@@ -15,19 +15,19 @@ async function sleepForMs(ms) { return new Promise(r => setTimeout(r, ms)) }
 function dnow() { return new Date().toISOString() }
 
 /* Uncomment the line below for testing */
-// init().then(() => { process.exit() })
+//init().then(() => { process.exit() })
 runonce().then(() => { console.log(`[${dnow()}] : INIT COMPLETE`)})
 
 async function runonce() {
   const cityList = JSON.parse(fs.readFileSync('./config/cityList.json', 'utf-8'))
-  const dateRange = ['2000-01-01', '2020-10-31']
+  const dateRange = ['1975-01-01', '2022-01-01']
   await prepareDB(cityList, dateRange)
 }
 
 /*  Main function */
-async function init() {
+async function init(shouldSort) {
   const cityList = JSON.parse(fs.readFileSync('./config/cityList.json', 'utf-8'))
-  await processCities(cityList)
+  await processCities(cityList, shouldSort)
 }
 
 async function insertDateInfo(sqlText) {
@@ -37,24 +37,42 @@ async function insertDateInfo(sqlText) {
   await sqlQuery(queryText)
 }
 
-async function processCities(cityList) {
+async function processCities(cityList, shouldSort) {
   const dateArray = []
   const maxCount = 10
   const url = 'https://api.darksky.net/forecast'
 
-  const data = await sqlQuery({
-    text: `SELECT * FROM "public".darksky_dailyweather WHERE rawdata = $1 ` +
-        `ORDER BY RANDOM() LIMIT ${Math.floor(maxCount * 2)}`,
-    values: [ '{}']
-  })
+  if (shouldSort === false) {
+    const data = await sqlQuery({
+      text: `SELECT * FROM "public".darksky_dailyweather WHERE rawdata = $1 ` +
+          `ORDER BY RANDOM() LIMIT ${Math.floor(maxCount * 2)}`,
+      values: [ '{}']
+    })
 
-  data.dbResult.forEach((d) => {
-    const dt = {
-      city: d.cityname,
-      date: new Date(`${d.eventtime.slice(0,10)}T06:00:00.000Z`)
-    }
-    dateArray.push(dt)
-  })
+    data.dbResult.forEach((d) => {
+      const dt = {
+        city: d.cityname,
+        date: new Date(`${d.eventtime.slice(0,10)}T06:00:00.000Z`)
+      }
+      dateArray.push(dt)
+    })
+  }
+
+  if (shouldSort === true) {
+    const data = await sqlQuery({
+      text: `SELECT * FROM "public".darksky_dailyweather WHERE rawdata = $1 ` +
+          `ORDER BY eventtime DESC LIMIT ${Math.floor(maxCount * 2)}`,
+      values: [ '{}']
+    })
+
+    data.dbResult.forEach((d) => {
+      const dt = {
+        city: d.cityname,
+        date: new Date(`${d.eventtime.slice(0,10)}T06:00:00.000Z`)
+      }
+      dateArray.push(dt)
+    })
+  }
 
   try {
     let c = 0
@@ -64,6 +82,7 @@ async function processCities(cityList) {
       const lon = cityList[city].lon
 
       const dateToProcess = dateArray[i].date.getTime() / 1000
+
       const dataResp = await got(`${url}/${darkSkyToken}/${lat},${lon},${dateToProcess}`)
       const weatherData = JSON.parse(dataResp.body)
       const insertText = `UPDATE "public".darksky_dailyweather SET rawdata = '${JSON.stringify(weatherData)}' ` +
@@ -149,12 +168,23 @@ async function updateDate() {
 
 }
 
-cron.schedule('0 */15 * * * *', () => {
+cron.schedule('0 */20 * * * *', () => {
   console.log(`[${dnow()}]: Starting DarkSky Fetch`)
-  init().then(() => { console.log(`[${dnow()}]: DONE`); return {} })
+  init(false).then(() => { console.log(`[${dnow()}]: DONE`); return {} })
 })
 
-cron.schedule('0 20 0 * * *', () => {
+cron.schedule('0 11 * * * *', () => {
+  console.log(`[${dnow()}]: Starting DarkSky Fetch`)
+  init(true).then(() => { console.log(`[${dnow()}]: DONE`); return {} })
+})
+
+cron.schedule('0 5 */6 * * *', () => {
+  console.log(`[${dnow()}]: Starting DarkSky Fetch`)
+  init(true).then(() => { console.log(`[${dnow()}]: DONE`); return {} })
+})
+
+cron.schedule('0 28 0 * * *', () => {
   console.log(`[${dnow()}]: [UPDATE] Date for existing cities`)
   updateDate().then(() => { console.log(`[${dnow()}]: [UPDATE DONE]`); return {} })
 })
+
