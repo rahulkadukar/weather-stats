@@ -20,7 +20,7 @@ runonce().then(() => { console.log(`[${dnow()}] : INIT COMPLETE`)})
 
 async function runonce() {
   const cityList = JSON.parse(fs.readFileSync('./config/cityList.json', 'utf-8'))
-  const dateRange = ['1975-01-01', '2022-01-01']
+  const dateRange = ['1975-01-01', '2022-07-01']
   await prepareDB(cityList, dateRange)
 }
 
@@ -170,7 +170,7 @@ async function updateDate() {
 
 cron.schedule('0 */20 * * * *', () => {
   console.log(`[${dnow()}]: Starting DarkSky Fetch`)
-  init(false).then(() => { console.log(`[${dnow()}]: DONE`); return {} })
+  init(true).then(() => { console.log(`[${dnow()}]: DONE`); return {} })
 })
 
 cron.schedule('0 11 * * * *', () => {
